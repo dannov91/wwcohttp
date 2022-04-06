@@ -13,6 +13,13 @@ func (h testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello client from Handle")
 }
 
+func testMW(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello from testMW\n")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	// 1. http.Handle -- we use the ServeHTTP method from testHandler empty struct as the request handler
 	http.Handle("/test-handle", testHandler{})
@@ -55,7 +62,14 @@ func main() {
 
 	http.HandleFunc("/test-get", testGET)
 
-	// 5. serving assets
+	// 5. How to implement middleware functions
+	testMWFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello from testMWFunc")
+	})
+
+	http.Handle("/test-mw", testMW(testMWFunc))
+
+	// 6. serving assets
 	fs := http.FileServer(http.Dir("assets"))
 	http.Handle("/", fs)
 
